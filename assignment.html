@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Attendance System - XYZ Company</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f4f7f6;
+            color: #333;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        #app {
+            width: 100%;
+            max-width: 700px;
+            background: #fff;
+            padding: 40px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        h1 {
+            text-align: center;
+            color: #007bff;
+        }
+
+        #logo {
+            display: block;
+            margin: 0 auto;
+            width: 120px;
+            height: auto;
+        }
+
+        .form-container {
+            margin-bottom: 30px;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+
+        fieldset {
+            border: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        legend {
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 10px;
+        }
+
+        input[type="text"],
+        input[type="password"],
+        select {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 20px;
+            border-radius: 6px;
+            border: 1px solid #ddd;
+            box-sizing: border-box;
+        }
+        button {
+            padding: 12px;
+            background-color: #007bff;
+            color: #fff;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+            font-size: 16px;
+            width: 100%;
+        }
+
+        button:hover {
+            background-color: #0056b3;
+        }
+
+        .error-message,
+        .attendance-message {
+            color: #e74c3c;
+            margin-top: 10px;
+            text-align: center;
+        }
+
+        .attendance-message {
+            color: #2ecc71;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th,
+        td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+
+        th {
+            background-color: #007bff;
+            color: #fff;
+        }
+
+        tr:nth-child(even) {
+            background-color: #f2f2f2;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .logout-button {
+            background-color: #dc3545;
+        }
+
+        .logout-button:hover {
+            background-color: #c82333;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="app">
+        <img src="https://www.shutterstock.com/image-vector/xyz-logo-260nw-453226318.jpg" alt="XYZ Company Logo" id="logo" />
+        <h1>Attendance System</h1>
+
+        <!-- Login Form -->
+         <div id="login" class="form-container">
+            <h2>Login</h2>
+            <fieldset>
+                <!-- <legend>Login Credentials</legend> -->
+                <label for="userType">User Type:</label>
+                <select id="userType">
+                    <option value="employee">Employee</option>
+                    <option value="admin">Admin</option>
+                </select>
+                <label for="username">Username:</label>
+                <input type="text" id="username" placeholder="Your Name / Employee ID" required>
+                <label for="password">Password:</label>
+                <input type="password" id="password" placeholder="Enter your password" required>
+            </fieldset>
+            <button onclick="login()">Login</button>
+            <div id="error-message" class="error-message"></div>
+        </div>
+        <!-- Employee Dashboard -->
+        <div id="employeeDashboard" class="hidden">
+            <h2>Welcome, <span id="employeeName"></span></h2>
+            <h3>Mark Attendance</h3>
+            <input type="text" id="employeeId" placeholder="Your Employee ID" required>
+            <button onclick="markAttendance()">Mark Attendance</button>
+            <div id="attendanceMessage" class="attendance-message"></div>
+            <button class="logout-button" onclick="logout()">Logout</button>
+        </div>
+
+        <!-- Admin Dashboard -->
+        <div id="adminDashboard" class="hidden">
+            <h2>Admin Dashboard</h2>
+            <h3>Attendance Records</h3>
+            <table id="attendanceTable">
+                <thead>
+                    <tr>
+                        <th>Employee Name</th>
+                        <th>Employee ID</th>
+                        <th>Status</th>
+                        <th>Date</th>
+                    </tr>
+                </thead>
+                <tbody id="attendanceBody"></tbody>
+            </table>
+            <button class="logout-button" onclick="logout()">Logout</button>
+        </div>
+    </div>
+
+    <script>
+        // Dummy data for demonstration
+        const employees = [
+            { id: '101', name: 'John Doe' },
+            { id: '102', name: 'Jane Smith' },
+            { id: '103', name: 'Bob Johnson' }
+        ];
+
+        function login() {
+            const userType = document.getElementById('userType').value;
+            const username = document.getElementById('username').value.trim();
+            const password = document.getElementById('password').value.trim();
+
+            if (userType === 'admin' && username === 'admin' && password === 'admin') {
+                localStorage.setItem('role', 'admin');
+                switchToAdminDashboard();
+                return;
+            }
+
+            // Check if it is an employee login
+            const employee = employees.find(emp => emp.id === username && password === 'employee');
+            if (employee) {
+                localStorage.setItem('role', 'employee');
+                localStorage.setItem('employeeName', employee.name); // Store employee name for display
+                switchToEmployeeDashboard(employee.name);
+            } else {
+                document.getElementById('error-message').innerText = "Invalid credentials! Please try again.";
+            }
+        }
+
+        function switchToEmployeeDashboard(employeeName) {
+            document.getElementById('login').classList.add('hidden');
+            document.getElementById('employeeDashboard').classList.remove('hidden');
+            document.getElementById('employeeName').innerText = employeeName; // Greet the employee
+        }
+
+        function switchToAdminDashboard() {
+            document.getElementById('login').classList.add('hidden');
+            document.getElementById('adminDashboard').classList.remove('hidden');
+            viewAttendance();
+        }
+        function markAttendance() {
+            const employeeId = document.getElementById('employeeId').value.trim();
+            const employee = employees.find(emp => emp.id === employeeId);
+            if (employee) {
+                const attendanceList = JSON.parse(localStorage.getItem('attendanceList')) || [];
+                const today = new Date().toLocaleDateString();
+                const existingRecord = attendanceList.find(record => record.id === employeeId && record.date === today);
+                if (!existingRecord) {
+                    const attendanceRecord = {
+                        name: employee.name,
+                        id: employeeId,
+                        status: 'Present',
+                        date: today
+                    };
+                    attendanceList.push(attendanceRecord);
+                    localStorage.setItem('attendanceList', JSON.stringify(attendanceList));
+                    document.getElementById('attendanceMessage').innerText = `Attendance marked as Present for ${employee.name}`;
+                } else {
+                    document.getElementById('attendanceMessage').innerText = `You have already marked attendance for today, ${employee.name}`;
+                }
+            } else {
+                document.getElementById('attendanceMessage').innerText = "Invalid Employee ID";
+            }
+        }
+
+        function viewAttendance() {
+            const attendanceList = JSON.parse(localStorage.getItem('attendanceList')) || [];
+            const tbody = document.getElementById('attendanceBody');
+            tbody.innerHTML = ''; // Clear previous records
+
+            attendanceList.forEach(record => {
+                const row = tbody.insertRow();
+                row.insertCell(0).innerText = record.name;
+                row.insertCell(1).innerText = record.id;
+                row.insertCell(2).innerText = record.status;
+                row.insertCell(3).innerText = record.date;
+            });
+
+            if (attendanceList.length === 0) {
+                const row = tbody.insertRow();
+                row.insertCell(0).innerText = 'No attendance records found';
+                row.insertCell(1).innerText = '';
+                row.insertCell(2).innerText = '';
+                row.insertCell(3).innerText = '';
+            }
+        }
+
+        function logout() {
+            localStorage.removeItem('role');
+            localStorage.removeItem('employeeName');
+            window.location.reload(); // Reloads the page to show the login form
+        }
+
+        // Handle page load
+        document.addEventListener('DOMContentLoaded', function () {
+            const role = localStorage.getItem('role');
+            if (role === 'employee') {
+                const employeeName = localStorage.getItem('employeeName');
+                switchToEmployeeDashboard(employeeName);
+            } else if (role === 'admin') {
+                switchToAdminDashboard();
+            }
+        });
+
+    </script>
+</body>
+
+</html>
